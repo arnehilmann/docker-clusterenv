@@ -60,12 +60,12 @@ if arguments["--interactive"]:
     print "-- interactive mode enabled"
     action_mode = "-i -t"
     script = "--cmd='/bin/bash -i'"
+    subprocess.call(updateenv_script)
 else:
     print "-- daemon mode enabled"
     action_mode = "-d"
     script = "--cmd='/usr/sbin/sshd -D'"
 
-subprocess.call(updateenv_script)
 
 print "-- docker command to be executed"
 cmd = "docker run %s -h %s -dns 127.0.0.1 %s -w %s %s %s %s %s" % (
@@ -80,4 +80,9 @@ cmd = "docker run %s -h %s -dns 127.0.0.1 %s -w %s %s %s %s %s" % (
 )
 print "---- %s" % cmd
 
-sys.exit(subprocess.call(cmd, shell=True))
+exit_code = subprocess.call(cmd, shell=True)
+
+if not arguments["--interactive"]:
+    subprocess.call(updateenv_script)
+
+sys.exit(exit_code)
