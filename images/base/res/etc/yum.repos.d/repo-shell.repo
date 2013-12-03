@@ -1,0 +1,5 @@
+[repo-shell]
+name=repo-shell
+baseurl=file:///repo-shell
+enabled=1
+gpgcheck=0

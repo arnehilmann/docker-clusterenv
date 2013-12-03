@@ -1,0 +1,5 @@
+[repo-base]
+name=repo-base
+baseurl=file:///repo-base
+enabled=1
+gpgcheck=0

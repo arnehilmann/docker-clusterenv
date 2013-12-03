@@ -1,0 +1,83 @@
+#!/usr/bin/env python
+"""
+Usage:
+    start-machine HOSTNAME [--mount-dir=DIRECTIVE...] [--link-files=FILES:PATH...] [--interactive]
+"""
+
+import os
+import subprocess
+import sys
+
+from docopt import docopt
+arguments = docopt(__doc__)
+
+print "starting a docker-clusterenv machine"
+
+DOCKER_IMAGE = "clusterenv/base"
+
+OUT_DIR = "out"
+LOCAL_DOCKER_CLUSTERENV_DIR = "/docker-clusterenv"
+LOCAL_DIR = "/local-fs"
+LOCAL_DNSMASQ_DIR = "/etc/dnsmasq.d/"
+LOCAL_OUT_DIR = os.path.join(LOCAL_DIR, OUT_DIR)
+
+DNSMASQ_DIR = os.path.abspath(os.path.join(OUT_DIR, "etc", "dnsmasq.d"))
+
+
+print "-- initializing environment"
+
+print "---- checking for needed directories"
+if not os.path.exists(OUT_DIR):
+    os.makedirs(OUT_DIR)
+
+if not os.path.exists(DNSMASQ_DIR):
+    os.makedirs(DNSMASQ_DIR)
+
+print "-- determining pathes and file names"
+docker_clusterenv_dir = os.path.abspath(os.path.dirname(sys.argv[0]))
+print "---- docker-clusterenv home: %s" % docker_clusterenv_dir
+updateenv_script = os.path.join(docker_clusterenv_dir, "update-env")
+print "---- update-env script: %s" %updateenv_script
+
+start_script = LOCAL_DOCKER_CLUSTERENV_DIR + "/init-machine"
+
+print "-- parsing mount directives"
+mount_directives = ["-v %s" % os.path.join(os.getcwd(), md)
+        for md in arguments["--mount-dir"]]
+mount_directives.append("-v %s:%s:ro" % (docker_clusterenv_dir, LOCAL_DOCKER_CLUSTERENV_DIR))
+mount_directives.append("-v %s:%s:ro" % (DNSMASQ_DIR, LOCAL_DNSMASQ_DIR))
+mount_directives.append("-v %s:%s:rw" % (os.getcwd(), LOCAL_DIR))
+
+mount_directives = " ".join(mount_directives)
+
+print "-- checking arguments for machine post-startup"
+pass_thru = " ".join(["%s=%s" % (pass_thru, param)
+    for pass_thru in ["--link-files"]
+    for param in arguments[pass_thru]
+])
+
+if arguments["--interactive"]:
+    print "-- interactive mode enabled"
+    action_mode = "-i -t"
+    script = "--cmd='/bin/bash -i'"
+else:
+    print "-- daemon mode enabled"
+    action_mode = "-d"
+    script = "--cmd='/usr/sbin/sshd -D'"
+
+subprocess.call(updateenv_script)
+
+print "-- docker command to be executed"
+cmd = "docker run %s -h %s -dns 127.0.0.1 %s -w %s %s %s %s %s" % (
+    action_mode,
+    arguments["HOSTNAME"],
+    mount_directives,
+    LOCAL_DIR,
+    DOCKER_IMAGE,
+    start_script,
+    pass_thru,
+    script
+)
+print "---- %s" % cmd
+
+sys.exit(subprocess.call(cmd, shell=True))

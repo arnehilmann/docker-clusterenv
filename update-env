@@ -1,0 +1,34 @@
+#!/bin/bash
+set -u -e -E
+
+IMAGE_PREFIX=clusterenv/
+DNSMASQ=out/etc/dnsmasq.d/0hosts
+TARGET=out/target
+STOP_CLUSTERENV=out/stop-clusterenv
+
+LOCAL_FS=/local-fs
+
+echo "-- setting up dns"
+DIDS=$(docker ps | grep $IMAGE_PREFIX | cut -d " " -f 1)
+echo "---- clusterenv machines found: "$DIDS
+
+mkdir -p $(dirname $DNSMASQ)
+rm -f $DNSMASQ
+exec 5>$DNSMASQ
+
+exec 7>$STOP_CLUSTERENV
+
+echo "---- integrating machines: dnsmasq, stop script"
+for DID in $DIDS; do
+    INSPECT=$(docker inspect $DID)
+    IP=$(sed -n '/"IPAddress":/{s/.*": "//;T;s/".*//;p}' <<< "$INSPECT")
+    HOSTNAME=$(sed -n '/"Hostname":/{s/.*": "//;T;s/".*//;p}' <<< "$INSPECT")
+    echo "------ integrating $DID: $HOSTNAME -> $IP"
+    echo "address=/$HOSTNAME/$IP" >&5
+    echo "ssh -o ConnectTimeout=4 -o BatchMode=yes -o CheckHostIP=no -o StrictHostKeyChecking=no $IP service sshd stop" >&7
+done
+echo "wait" >&7
+chmod a+rx $STOP_CLUSTERENV
+
+echo "---- closing all generated files"
+exec 5>&- 7>&-

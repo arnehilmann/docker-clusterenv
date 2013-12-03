@@ -1,0 +1,25 @@
+#!/bin/bash
+set -e -E -u
+
+CONTAINER_PREFIX=clusterenv
+OUT_DIR=out
+
+echo "building all images"
+
+mkdir -p $OUT_DIR
+
+echo "-- building images"
+for IMAGE_DIR in images/*; do
+    NAME=$(basename $IMAGE_DIR)
+    TAG=$CONTAINER_PREFIX/$NAME
+    if docker images | grep -q $TAG; then
+        echo "---- $TAG already exists, skipping"
+        continue
+    fi
+    echo "---- building $TAG image"
+    LOGFILE=$OUT_DIR/$NAME.log
+    echo "------ log file is $LOGFILE"
+    docker build -rm -t $TAG $IMAGE_DIR | tee $LOGFILE
+done
+
+echo "done."

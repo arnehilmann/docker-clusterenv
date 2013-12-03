@@ -1,0 +1,56 @@
+#!/usr/bin/env python
+"""
+Usage:
+    role-generic [--link-files=FILES:PATH...] [--cmd=CMD]
+
+Options:
+    --cmd=CMD   command to be executed (default: /usr/sbin/sshd -D)
+"""
+
+import os
+import glob
+import shlex
+import socket
+import subprocess
+import sys
+
+from docopt import docopt
+arguments = docopt(__doc__)
+
+LOG_DIR = "logs/dtb/generic/"
+LOG_FILE = os.path.join(LOG_DIR, socket.gethostname())
+
+if not os.path.exists(LOG_DIR):
+    os.makedirs(LOG_DIR)
+# poor mans logging, for the start
+sys.stdout = open(LOG_FILE, "w")
+sys.stderr = sys.stdout
+
+print "initializing clusterenv machine"
+print "-- arguments"
+print arguments
+
+def link_all(src_dir, dst_dir):
+    src_dir = os.path.abspath(src_dir)
+    print "-- linking all files from %s to %s" % (src_dir, dst_dir)
+    for src in glob.glob(src_dir):
+        print "---- linking %s" % src
+        dst = os.path.join(dst_dir, os.path.basename(src))
+        if not os.path.exists(dst):
+            os.symlink(src, dst)
+
+for directive in arguments["--link-files"]:
+    files, path = directive.split(":")
+    if path == "_python_path_":
+        path = (p for p in sys.path if p.endswith("/site-packages")).next()
+    link_all(files, path)
+
+print "-- starting dnsmasq"
+subprocess.call(["/usr/bin/sudo", "service", "dnsmasq", "start"])
+
+print "-- changinig dir to 'out'"
+os.chdir("out")
+
+print "-- starting cmd"
+cmd = shlex.split(arguments["--cmd"])
+sys.exit(subprocess.call(cmd))
