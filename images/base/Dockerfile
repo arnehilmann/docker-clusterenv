@@ -21,7 +21,7 @@ RUN service sshd start
 RUN yum install -y openssh-clients
 RUN ssh-keygen -q -t rsa -f /root/.ssh/id_rsa -N ""
 RUN cp /root/.ssh/id_rsa.pub /root/.ssh/authorized_keys
-RUN sed -ri "s/^#[[:space:]]*StrictHostKeyChecking .*$/StrictHostKeyChecking no/g;" /etc/ssh/ssh_config
+RUN sed -ri "s/^#[[:space:]]*StrictHostKeyChecking .*$/StrictHostKeyChecking no\nLogLevel quiet/g;" /etc/ssh/ssh_config
 
 # install/configure sudo
 RUN yum install -y sudo
