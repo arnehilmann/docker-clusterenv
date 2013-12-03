@@ -3,7 +3,7 @@ docker-clusterenv
 
 or: *development of cluster applications meets docker*
 
-or : *One change in the source code to rule them all* 
+or : *One change in the source code to rule them all*
 
 Objectives
 ----------
@@ -21,7 +21,7 @@ customized to your development needs.
 * ssh access enabled
 * dns lookup working
 * just one command to specify where ...
-    * to mount local (source) directories, and 
+    * to mount local (source) directories, and
     * to create symbolic links (for applications using absolute path names)
 
 ⇒  One change in the source code is available instantaniously on your whole development cluster.
@@ -49,15 +49,15 @@ tl;dr
 ./start-machine foo3 --interactive
 
 # tadahh! thats it, 3 machines up-n-running
-# 
-# but what can you do with them? 
+#
+# but what can you do with them?
 # so from here, interactivly on 'foo3':
 
 # your current working directory, writeable
-ls -al /local-fs    
+ls -al /local-fs
 
 # dns for your other cluster machines
-cat /etc/dnsmasq.d/0hosts   
+cat /etc/dnsmasq.d/0hosts
 
 # ssh on other machine
 ssh foo1 hostname
@@ -66,4 +66,13 @@ ssh foo1 hostname
 
 /local-fs/out/stop-clusterenv
 ```
+
+TODO
+----
+
+* get rid of update-env, every machine registers itself with dnsmasq
+* get rid of generated stop-clusterenv script, provide function that parses dnsmasq info
+* check for hostname clashes
+* document --link-files
+* document _python_path_
 
