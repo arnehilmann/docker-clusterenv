@@ -17,6 +17,9 @@ RUN mkdir /var/run/sshd/
 RUN sed -ri "s/^#PermitRootLogin yes/PermitRootLogin yes/g;s/^UsePAM yes/#UsePAM yes/g;s/^#UsePAM no/UsePAM no/g;" /etc/ssh/sshd_config
 RUN service sshd start
 
+# minimal bash configuration
+RUN echo "source /etc/bashrc" | tee -a /.bashrc /root/.bash_profile
+
 # install/configure ssh + keys
 RUN yum install -y openssh-clients
 RUN ssh-keygen -q -t rsa -f /root/.ssh/id_rsa -N ""
