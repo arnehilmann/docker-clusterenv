@@ -60,4 +60,7 @@ os.chdir("out")
 
 print "-- starting cmd"
 cmd = shlex.split(arguments["--cmd"])
-sys.exit(subprocess.call(cmd))
+exit_code = subprocess.call(cmd)
+
+os.remove(DNSMASQ_FILE)
+sys.exit(exit_code)
