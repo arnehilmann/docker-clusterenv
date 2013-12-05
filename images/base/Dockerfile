@@ -36,5 +36,8 @@ RUN yum install -y dnsmasq bind-utils
 # dev env stuff
 RUN yum install -y python-twisted hostexpand python-netifaces PyYAML python-docopt python-simplejson
 
+# add stop script
+RUN ln -sf /stop-machines /usr/bin/
+
 # removing temp files
 RUN yum clean all
