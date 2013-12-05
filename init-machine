@@ -17,8 +17,10 @@ import sys
 from docopt import docopt
 arguments = docopt(__doc__)
 
+hostname = socket.gethostname()
 LOG_DIR = "logs/dtb/generic/"
-LOG_FILE = os.path.join(LOG_DIR, socket.gethostname())
+LOG_FILE = os.path.join(LOG_DIR, hostname)
+DNSMASQ_FILE = os.path.join("/etc/dnsmasq.d/", hostname)
 
 if not os.path.exists(LOG_DIR):
     os.makedirs(LOG_DIR)
@@ -45,10 +47,15 @@ for directive in arguments["--link-files"]:
         path = (p for p in sys.path if p.endswith("/site-packages")).next()
     link_all(files, path)
 
+print "-- generating dnsmasq config for this machine"
+ip = socket.gethostbyname(socket.gethostname())
+with open(DNSMASQ_FILE, "w") as dnsmasq_file:
+    dnsmasq_file.write("address=/%s/%s" % (hostname, ip))
+
 print "-- starting dnsmasq"
 subprocess.call(["/usr/bin/sudo", "service", "dnsmasq", "start"])
 
-print "-- changinig dir to 'out'"
+print "-- changing dir to 'out'"
 os.chdir("out")
 
 print "-- starting cmd"

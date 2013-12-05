@@ -45,7 +45,7 @@ print "-- parsing mount directives"
 mount_directives = ["-v %s" % os.path.join(os.getcwd(), md)
         for md in arguments["--mount-dir"]]
 mount_directives.append("-v %s:%s:ro" % (docker_clusterenv_dir, LOCAL_DOCKER_CLUSTERENV_DIR))
-mount_directives.append("-v %s:%s:ro" % (DNSMASQ_DIR, LOCAL_DNSMASQ_DIR))
+mount_directives.append("-v %s:%s:rw" % (DNSMASQ_DIR, LOCAL_DNSMASQ_DIR))
 mount_directives.append("-v %s:%s:rw" % (os.getcwd(), LOCAL_DIR))
 
 mount_directives = " ".join(mount_directives)
