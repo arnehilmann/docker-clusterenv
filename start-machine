@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
 Usage:
-    start-machine HOSTNAME [--mount-dir=DIRECTIVE...] [--link-files=FILES:PATH...] [--interactive]
+    start-machine [HOSTNAME] [--mount-dir=DIRECTIVE...] [--link-files=FILES:PATH...] [--interactive]
 """
 
 import os
@@ -65,9 +65,11 @@ else:
 
 
 print "-- docker command to be executed"
-cmd = "docker run %s -h %s -dns 127.0.0.1 %s -w %s %s %s %s %s" % (
+hostname = arguments["HOSTNAME"]
+hostname_arg = "-h %s" % hostname if hostname else ""
+cmd = "docker run %s %s -dns 127.0.0.1 %s -w %s %s %s %s %s" % (
     action_mode,
-    arguments["HOSTNAME"],
+    hostname_arg,
     mount_directives,
     LOCAL_DIR,
     DOCKER_IMAGE,
