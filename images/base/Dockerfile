@@ -18,7 +18,7 @@ RUN sed -ri "s/^#PermitRootLogin yes/PermitRootLogin yes/g;s/^UsePAM yes/#UsePAM
 RUN service sshd start
 
 # minimal bash configuration
-RUN echo "source /etc/bashrc" | tee -a /.bashrc /root/.bash_profile
+RUN echo "source /etc/bashrc" | tee /.bashrc > /root/.bash_profile
 
 # install/configure ssh + keys
 RUN yum install -y openssh-clients
