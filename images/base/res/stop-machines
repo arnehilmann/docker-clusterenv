@@ -1,0 +1,16 @@
+#!/bin/bash
+set -e -E -u
+
+echo "stopping sshd services of all known clusterenv machines"
+
+for IP in $(sed "s_address=/.*/__" /etc/dnsmasq.d/*); do
+    echo "-- stopping $IP"
+    ssh -o ConnectTimeout=4 -o BatchMode=yes -o CheckHostIP=no -o StrictHostKeyChecking=no \
+        $IP \
+        sudo service sshd stop &
+done
+wait
+
+echo
+echo "use 'exit' or Ctrl-D to stop this very last clusterenv machine"
+echo
