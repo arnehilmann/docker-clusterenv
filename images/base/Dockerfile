@@ -34,7 +34,7 @@ RUN sed -ri '/^Defaults[[:space:]]*requiretty/s/^/#/' /etc/sudoers
 RUN yum install -y dnsmasq bind-utils
 
 # dev env stuff
-RUN yum install -y python-twisted hostexpand python-netifaces PyYAML python-docopt python-simplejson
+RUN yum install -y python-twisted python-netifaces PyYAML python-docopt python-simplejson python-dns
 
 # add stop script
 RUN ln -sf /stop-machines /usr/bin/
