@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
 Usage:
-    start-machine [HOSTNAME] [--mount-dir=DIRECTIVE...] [--link-files=FILES:PATH...] [--interactive]
+    start-machine [HOSTNAME] [--mount-dir=DIRECTIVE...] [--link-files=FILES:PATH...] [--port=MAPPING...] [--interactive]
 """
 
 import os
@@ -45,8 +45,9 @@ mount_directives = ["-v %s" % os.path.join(os.getcwd(), md)
 mount_directives.append("-v %s:%s:ro" % (docker_clusterenv_dir, LOCAL_DOCKER_CLUSTERENV_DIR))
 mount_directives.append("-v %s:%s:rw" % (DNSMASQ_DIR, LOCAL_DNSMASQ_DIR))
 mount_directives.append("-v %s:%s:rw" % (os.getcwd(), LOCAL_DIR))
-
 mount_directives = " ".join(mount_directives)
+
+port_directives = " ".join(["-p %s" % pd for pd in arguments["--port"]])
 
 print "-- checking arguments for machine post-startup"
 pass_thru = " ".join(["%s=%s" % (pass_thru, param)
@@ -67,11 +68,12 @@ else:
 print "-- docker command to be executed"
 hostname = arguments["HOSTNAME"]
 hostname_arg = "-h %s" % hostname if hostname else ""
-cmd = "docker run %s %s -dns 127.0.0.1 %s -w %s %s %s %s %s" % (
+cmd = "docker run %s %s -dns 127.0.0.1 %s -w %s %s %s %s %s %s" % (
     action_mode,
     hostname_arg,
     mount_directives,
     LOCAL_DIR,
+    port_directives,
     DOCKER_IMAGE,
     start_script,
     pass_thru,
