@@ -35,6 +35,8 @@ print arguments
 def link_all(src_dir, dst_dir):
     src_dir = os.path.abspath(src_dir)
     print "-- linking all files from %s to %s" % (src_dir, dst_dir)
+    if not os.path.exists(dst_dir):
+        os.makedirs(dst_dir)
     for src in glob.glob(src_dir):
         print "---- linking %s" % src
         dst = os.path.join(dst_dir, os.path.basename(src))
