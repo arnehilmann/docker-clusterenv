@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
 Usage:
-    role-generic [--link-files=FILES:PATH...] [--cmd=CMD]
+    init-machine [--link-files=FILES:PATH...] [--cmd=CMD] [--post-init-machine=FILE]
 
 Options:
     --cmd=CMD   command to be executed (default: /usr/sbin/sshd -D)
@@ -18,8 +18,8 @@ from docopt import docopt
 arguments = docopt(__doc__)
 
 hostname = socket.gethostname()
-LOG_DIR = "logs/dtb/generic/"
-LOG_FILE = os.path.join(LOG_DIR, hostname)
+LOG_DIR = "out/logs/"
+LOG_FILE = os.path.join(LOG_DIR, "%s.init" % hostname)
 DNSMASQ_FILE = os.path.join("/etc/dnsmasq.d/", hostname)
 
 if not os.path.exists(LOG_DIR):
@@ -56,6 +56,11 @@ with open(DNSMASQ_FILE, "w") as dnsmasq_file:
 
 print "-- starting dnsmasq"
 subprocess.call(["/usr/bin/sudo", "service", "dnsmasq", "start"])
+
+post_init_machine = arguments["--post-init-machine"]
+if post_init_machine:
+    print "-- calling post init machine %s" % post_init_machine
+    subprocess.call([post_init_machine])
 
 print "-- changing dir to 'out'"
 os.chdir("out")

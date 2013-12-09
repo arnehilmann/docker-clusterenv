@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
 Usage:
-    start-machine [HOSTNAME] [--mount-dir=DIRECTIVE...] [--link-files=FILES:PATH...] [--port=MAPPING...] [--interactive]
+    start-machine [HOSTNAME] [--mount-dir=DIRECTIVE...] [--link-files=FILES:PATH...] [--port=MAPPING...] [--post-init-machine=FILE] [--interactive]
 """
 
 import os
@@ -37,7 +37,7 @@ print "-- determining pathes and file names"
 docker_clusterenv_dir = os.path.abspath(os.path.dirname(sys.argv[0]))
 print "---- docker-clusterenv home: %s" % docker_clusterenv_dir
 
-start_script = LOCAL_DOCKER_CLUSTERENV_DIR + "/init-machine"
+init_machine = LOCAL_DOCKER_CLUSTERENV_DIR + "/init-machine"
 
 print "-- parsing mount directives"
 mount_directives = ["-v %s" % os.path.join(os.getcwd(), md)
@@ -50,10 +50,15 @@ mount_directives = " ".join(mount_directives)
 port_directives = " ".join(["-p %s" % pd for pd in arguments["--port"]])
 
 print "-- checking arguments for machine post-startup"
-pass_thru = " ".join(["%s=%s" % (pass_thru, param)
+pass_thru = ["%s=%s" % (pass_thru, param)
     for pass_thru in ["--link-files"]
     for param in arguments[pass_thru]
-])
+]
+post_init_machine = arguments["--post-init-machine"]
+if post_init_machine:
+    post_init_machine = os.path.join(LOCAL_DIR, post_init_machine)
+    pass_thru.append("--post-init-machine=%s" % post_init_machine)
+pass_thru = " ".join(pass_thru)
 
 if arguments["--interactive"]:
     print "-- interactive mode enabled"
@@ -75,7 +80,7 @@ cmd = "docker run %s %s -dns 127.0.0.1 %s -w %s %s %s %s %s %s" % (
     LOCAL_DIR,
     port_directives,
     DOCKER_IMAGE,
-    start_script,
+    init_machine,
     pass_thru,
     script
 )
