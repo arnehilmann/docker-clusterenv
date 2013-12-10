@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
 Usage:
-    start-machine [HOSTNAME] [--mount-dir=DIRECTIVE...] [--link-files=FILES:PATH...] [--port=MAPPING...] [--post-init-machine=FILE] [--interactive]
+    start-machine [<hostname>] [--mount-dir=<directive>...] [--link-files=<fileglob>:<path>...] [--port=MAPPING...] [--post-init-machine=<file>] [--interactive|--daemon|<cmd>...]
 """
 
 import os
@@ -64,6 +64,10 @@ if arguments["--interactive"]:
     print "-- interactive mode enabled"
     action_mode = "-i -t"
     script = "--cmd='/bin/bash -i'"
+elif arguments["<cmd>"]:
+    print "-- direct-command mode enabled"
+    action_mode = "-i -t"
+    script = "--cmd='%s'" % " ".join(arguments["<cmd>"])
 else:
     print "-- daemon mode enabled"
     action_mode = "-d"
@@ -71,7 +75,7 @@ else:
 
 
 print "-- docker command to be executed"
-hostname = arguments["HOSTNAME"]
+hostname = arguments["<hostname>"]
 hostname_arg = "-h %s -name %s" % (hostname, hostname) if hostname else ""
 cmd = "docker run %s %s -dns 127.0.0.1 %s -w %s %s %s %s %s %s" % (
     action_mode,
@@ -88,4 +92,10 @@ print "---- %s" % cmd
 
 exit_code = subprocess.call(cmd, shell=True)
 
+if "-d" not in action_mode and hostname:
+    print "-- removing non-daemon container '%s'" % hostname
+    with open(os.devnull, "w") as fnull:
+        subprocess.call(["docker", "rm", hostname], stdout=fnull)
+
+print "-- exit code %s" % exit_code
 sys.exit(exit_code)
