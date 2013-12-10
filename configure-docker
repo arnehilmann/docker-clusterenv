@@ -1,0 +1,45 @@
+#!/bin/bash
+set -u -e -E
+
+DOCKER_PID=/var/run/docker.pid
+DOCKER_SOCK=/var/run/docker.sock
+DOCKER_LOG=/tmp/docker.log
+DOCKER_PORT=4243
+DOCKERUI_CID=/tmp/dockerui.cid
+DOCKERUI_PORT=9000
+
+IP=${1:-$(hostname -I | cut -f 1 -d " ")}
+
+echo "configuring docker and dockerui"
+echo "-- configuring services with local ip $IP"
+
+echo "-- starting docker daemon"
+if [[ -e $DOCKER_PID ]]; then
+    echo "---- stopping running docker daemon with pid $(cat $DOCKER_PID)"
+    sudo kill $(cat $DOCKER_PID) || :
+    sudo rm $DOCKER_SOCK || :
+fi
+
+echo "---- starting daemon"
+sudo docker -d -r=false -H tcp://$IP:$DOCKER_PORT -H unix://$DOCKER_SOCK -api-enable-cors > $DOCKER_LOG 2>&1 &
+while [[ ! -S $DOCKER_SOCK ]]; do
+    sleep 1
+    echo "------ waiting for daemon to start"
+done
+sudo chmod a+rw $DOCKER_SOCK    # TODO security risk, use group permissions only!!!
+echo "---- docker started, log file is $DOCKER_LOG"
+
+echo "-- starting dockerui container"
+if [[ -e $DOCKERUI_CID ]]; then
+    CID=$(cat $DOCKERUI_CID)
+    echo "---- stopping running dockerui container with cid $CID"
+    if [[ -n $CID ]]; then
+        docker stop -t=4 $(cat $DOCKERUI_CID) > /dev/null || :
+    fi
+    rm -f $DOCKERUI_CID
+fi
+echo "---- starting container"
+docker run -d -dns 8.8.8.8 -p $DOCKERUI_PORT:$DOCKERUI_PORT -cidfile=$DOCKERUI_CID crosbymichael/dockerui -e="http://$IP:$DOCKER_PORT" > /dev/null
+echo "---- dockerui started, served at http://localhost:$DOCKERUI_PORT/"
+
+echo "done."
