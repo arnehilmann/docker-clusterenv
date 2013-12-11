@@ -4,6 +4,7 @@ Usage:
     start-machine [<hostname>] [--mount-dir=<directive>...] [--link-files=<fileglob>:<path>...] [--port=MAPPING...] [--post-init-machine=<file>] [--interactive|--daemon|<cmd>...]
 """
 
+import json
 import os
 import subprocess
 import sys
@@ -49,6 +50,8 @@ mount_directives = " ".join(mount_directives)
 
 port_directives = " ".join(["-p %s" % pd for pd in arguments["--port"]])
 
+hostname = arguments["<hostname>"]
+
 print "-- checking arguments for machine post-startup"
 pass_thru = ["%s=%s" % (pass_thru, param)
     for pass_thru in ["--link-files"]
@@ -73,9 +76,17 @@ else:
     action_mode = "-d"
     script = "--cmd='/usr/sbin/sshd -D'"
 
+print "-- checking for non-running container named '%s'" % hostname
+with open(os.devnull, "w") as fnull:
+    output = subprocess.Popen(["docker", "inspect", hostname], stdout=subprocess.PIPE, stderr=fnull).communicate()[0]
+    container_status = json.loads(output)
+    if container_status:
+        running = container_status[0]["State"]["Running"]
+        if not running:
+            print "---- stopped container '%s' found, removing it now" % hostname
+            subprocess.call(["docker", "rm", hostname], stdout=fnull)
 
-print "-- docker command to be executed"
-hostname = arguments["<hostname>"]
+print "-- docker command to be executed:"
 hostname_arg = "-h %s -name %s" % (hostname, hostname) if hostname else ""
 cmd = "docker run %s %s -dns 127.0.0.1 %s -w %s %s %s %s %s %s" % (
     action_mode,
@@ -91,11 +102,5 @@ cmd = "docker run %s %s -dns 127.0.0.1 %s -w %s %s %s %s %s %s" % (
 print "---- %s" % cmd
 
 exit_code = subprocess.call(cmd, shell=True)
-
-if "-d" not in action_mode and hostname:
-    print "-- removing non-daemon container '%s'" % hostname
-    with open(os.devnull, "w") as fnull:
-        subprocess.call(["docker", "rm", hostname], stdout=fnull)
-
 print "-- exit code %s" % exit_code
 sys.exit(exit_code)
