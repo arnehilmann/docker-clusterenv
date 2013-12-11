@@ -4,10 +4,19 @@ Usage:
     start-machine [<hostname>] [--mount-dir=<directive>...] [--link-files=<fileglob>:<path>...] [--port=MAPPING...] [--post-init-machine=<file>] [--interactive|--daemon|<cmd>...]
 """
 
+import collections
 import json
 import os
 import subprocess
 import sys
+
+def flatten(l):
+    for el in l:
+        if isinstance(el, collections.Iterable) and not isinstance(el, basestring):
+            for sub in flatten(el):
+                yield sub
+        else:
+            yield el
 
 from docopt import docopt
 arguments = docopt(__doc__)
@@ -41,14 +50,13 @@ print "---- docker-clusterenv home: %s" % docker_clusterenv_dir
 init_machine = LOCAL_DOCKER_CLUSTERENV_DIR + "/init-machine"
 
 print "-- parsing mount directives"
-mount_directives = ["-v %s" % os.path.join(os.getcwd(), md)
+mount_directives = [["-v",os.path.join(os.getcwd(), md)]
         for md in arguments["--mount-dir"]]
-mount_directives.append("-v %s:%s:ro" % (docker_clusterenv_dir, LOCAL_DOCKER_CLUSTERENV_DIR))
-mount_directives.append("-v %s:%s:rw" % (DNSMASQ_DIR, LOCAL_DNSMASQ_DIR))
-mount_directives.append("-v %s:%s:rw" % (os.getcwd(), LOCAL_DIR))
-mount_directives = " ".join(mount_directives)
+mount_directives.append(["-v", "%s:%s:ro" % (docker_clusterenv_dir, LOCAL_DOCKER_CLUSTERENV_DIR)])
+mount_directives.append(["-v", "%s:%s:rw" % (DNSMASQ_DIR, LOCAL_DNSMASQ_DIR)])
+mount_directives.append(["-v", "%s:%s:rw" % (os.getcwd(), LOCAL_DIR)])
 
-port_directives = " ".join(["-p %s" % pd for pd in arguments["--port"]])
+port_directives = [["-p", pd] for pd in arguments["--port"]]
 
 hostname = arguments["<hostname>"]
 
@@ -61,20 +69,19 @@ post_init_machine = arguments["--post-init-machine"]
 if post_init_machine:
     post_init_machine = os.path.join(LOCAL_DIR, post_init_machine)
     pass_thru.append("--post-init-machine=%s" % post_init_machine)
-pass_thru = " ".join(pass_thru)
 
 if arguments["--interactive"]:
     print "-- interactive mode enabled"
-    action_mode = "-i -t"
-    script = "--cmd='/bin/bash -i'"
+    action_mode = ["-i", "-t"]
+    script = "--cmd=/bin/bash -i"
 elif arguments["<cmd>"]:
     print "-- direct-command mode enabled"
-    action_mode = "-i -t"
-    script = "--cmd='%s'" % " ".join(arguments["<cmd>"])
+    action_mode = ["-i", "-t"]
+    script = "--cmd=%s" % " ".join(arguments["<cmd>"])
 else:
     print "-- daemon mode enabled"
     action_mode = "-d"
-    script = "--cmd='/usr/sbin/sshd -D'"
+    script = "--cmd=/usr/sbin/sshd -D"
 
 print "-- checking for non-running container named '%s'" % hostname
 with open(os.devnull, "w") as fnull:
@@ -82,25 +89,29 @@ with open(os.devnull, "w") as fnull:
     container_status = json.loads(output)
     if container_status:
         running = container_status[0]["State"]["Running"]
-        if not running:
+        if running:
+            print "---- container '%s' seems to be running already" % hostname
+        else:
             print "---- stopped container '%s' found, removing it now" % hostname
             subprocess.call(["docker", "rm", hostname], stdout=fnull)
 
 print "-- docker command to be executed:"
-hostname_arg = "-h %s -name %s" % (hostname, hostname) if hostname else ""
-cmd = "docker run %s %s -dns 127.0.0.1 %s -w %s %s %s %s %s %s" % (
-    action_mode,
-    hostname_arg,
+hostname_arg = ["-h", hostname, "-name", hostname] if hostname else []
+cmd = [
+    "docker", "run", action_mode, hostname_arg,
     mount_directives,
-    LOCAL_DIR,
+    "-dns", "127.0.0.1",
+    "-w", LOCAL_DIR,
     port_directives,
-    DOCKER_IMAGE,
-    init_machine,
+    DOCKER_IMAGE, init_machine,
     pass_thru,
     script
-)
-print "---- %s" % cmd
+]
 
-exit_code = subprocess.call(cmd, shell=True)
+cmd = list(flatten(cmd))
+print "---- %s" % cmd
+print "-" * 40
+exit_code = subprocess.call(cmd)
+
 print "-- exit code %s" % exit_code
 sys.exit(exit_code)
