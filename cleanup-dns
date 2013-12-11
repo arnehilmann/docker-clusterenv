@@ -1,0 +1,15 @@
+#!/bin/bash
+set -u -e -E
+
+DNSMASQ_DIR=out/etc/dnsmasq.d/
+
+MACHINES=$(sed -n "s_^address=/__;T;s_/.*__;T;p" $DNSMASQ_DIR/*)
+
+for MACHINE in $MACHINES; do
+    if docker inspect $MACHINE 2> /dev/null | grep -q '"Running": true'; then
+        echo "$MACHINE"
+    else
+        echo "$MACHINE down" >&2
+        rm -f $DNSMASQ_DIR/$MACHINE
+    fi
+done
