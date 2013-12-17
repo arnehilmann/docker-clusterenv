@@ -109,7 +109,7 @@ cmd = [
 ]
 
 cmd = list(flatten(cmd))
-print "---- %s" % cmd
+print "---- %s" % " ".join(cmd)
 print "-" * 40
 exit_code = subprocess.call(cmd)
 
