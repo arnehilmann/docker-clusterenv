@@ -21,7 +21,15 @@ if [[ -e $DOCKER_PID ]]; then
 fi
 
 echo "---- starting daemon"
-sudo docker -d -r=false -H tcp://$IP:$DOCKER_PORT -H unix://$DOCKER_SOCK -api-enable-cors > $DOCKER_LOG 2>&1 &
+echo "------ unix socket: $DOCKER_SOCK"
+echo "------ tcp socket: $IP:$DOCKER_PORT"
+echo "------ log file: $DOCKER_LOG"
+[[ -n $DOCKER_ROOT_DIR ]] && echo "------ root dir: $DOCKER_ROOT_DIR"
+sudo docker -d -r=false \
+    ${DOCKER_ROOT_DIR:+-g $DOCKER_ROOT_DIR} \
+    -H tcp://$IP:$DOCKER_PORT \
+    -H unix://$DOCKER_SOCK \
+    -api-enable-cors > $DOCKER_LOG 2>&1 &
 while [[ ! -S $DOCKER_SOCK ]]; do
     sleep 1
     echo "------ waiting for daemon to start"

@@ -67,6 +67,28 @@ ssh foo1 hostname
 stop-machines
 ```
 
+Commands
+--------
+
+configure-docker
+################
+
+- restarts the docker service
+
+- configures both unix and tcp socket (for dockerui)
+
+- starts dockerui container (see http://localhost:9000/)
+
+- customizing:
+
+    - honors the DOCKER_ROOT_DIR env variable, if present: sets the docker root dir (default: /var/lib/docker)
+
+    - example:
+
+    ```bash
+    DOCKER_ROOT_DIR=/mnt/big_disk/docker/ ./configure-docker
+    ```
+
 TODO
 ----
 
