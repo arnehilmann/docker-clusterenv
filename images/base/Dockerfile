@@ -14,7 +14,7 @@ RUN yum update -y
 # install/configure sshd
 RUN yum install -y openssh-server
 RUN mkdir /var/run/sshd/
-RUN sed -ri "s/^#PermitRootLogin yes/PermitRootLogin yes/g;s/^UsePAM yes/#UsePAM yes/g;s/^#UsePAM no/UsePAM no/g;" /etc/ssh/sshd_config
+RUN sed -ri "s/^#PermitRootLogin yes/PermitRootLogin yes/g;s/^UsePAM yes/#UsePAM yes/g;s/^#UsePAM no/UsePAM no/g;s/.?UseDNS .*/UseDNS no/;" /etc/ssh/sshd_config
 RUN service sshd start
 
 # minimal bash configuration
@@ -24,7 +24,7 @@ RUN echo "source /etc/bashrc" | tee /.bashrc > /root/.bash_profile
 RUN yum install -y openssh-clients
 RUN ssh-keygen -q -t rsa -f /root/.ssh/id_rsa -N ""
 RUN cp /root/.ssh/id_rsa.pub /root/.ssh/authorized_keys
-RUN sed -ri "s/^#[[:space:]]*StrictHostKeyChecking .*$/StrictHostKeyChecking no\nLogLevel quiet/g;" /etc/ssh/ssh_config
+RUN sed -ri "s/^#[[:space:]]*StrictHostKeyChecking .*$/StrictHostKeyChecking no\nLogLevel quiet/g;/GSS/s/yes/no/g;" /etc/ssh/ssh_config
 
 # install/configure sudo
 RUN yum install -y sudo
@@ -41,3 +41,10 @@ RUN ln -sf /stop-machines /usr/bin/
 
 # removing temp files
 RUN yum clean all
+
+# remove references to external repos
+RUN yum remove -y epel-release
+RUN mv /etc/yum.repos.d/CentOS*.repo /tmp
+
+# update yum db
+RUN yum update
