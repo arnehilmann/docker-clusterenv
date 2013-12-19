@@ -94,7 +94,7 @@ TODO
 
 * ~~get rid of update-env, every machine registers itself with dnsmasq~~
 * ~~get rid of generated stop-clusterenv script, provide function that parses dnsmasq info~~
-* check for hostname clashes
+* ~~check for hostname clashes~~
 * document --link-files
 * document _python_path_
 
