@@ -36,18 +36,19 @@ while [[ ! -S $DOCKER_SOCK ]]; do
 done
 sudo chmod a+rw $DOCKER_SOCK    # TODO security risk, use group permissions only!!!
 echo "---- docker started, log file is $DOCKER_LOG"
+sleep 2
 
-echo "-- starting dockerui container"
-if [[ -e $DOCKERUI_CID ]]; then
-    CID=$(cat $DOCKERUI_CID)
-    echo "---- stopping running dockerui container with cid $CID"
-    if [[ -n $CID ]]; then
-        docker stop -t=4 $(cat $DOCKERUI_CID) > /dev/null || :
-    fi
-    rm -f $DOCKERUI_CID
-fi
-echo "---- starting container"
-docker run -d -dns 8.8.8.8 -p $DOCKERUI_PORT:$DOCKERUI_PORT -cidfile=$DOCKERUI_CID crosbymichael/dockerui -e="http://$IP:$DOCKER_PORT" > /dev/null
-echo "---- dockerui started, served at http://localhost:$DOCKERUI_PORT/"
+#echo "-- starting dockerui container"
+#if [[ -e $DOCKERUI_CID ]]; then
+#    CID=$(cat $DOCKERUI_CID)
+#    echo "---- stopping running dockerui container with cid $CID"
+#    if [[ -n $CID ]]; then
+#        docker stop -t=4 $(cat $DOCKERUI_CID) > /dev/null || :
+#    fi
+#    rm -f $DOCKERUI_CID
+#fi
+#echo "---- starting container"
+#docker run -d -dns 8.8.8.8 -p $DOCKERUI_PORT:$DOCKERUI_PORT -cidfile=$DOCKERUI_CID crosbymichael/dockerui -e="http://$IP:$DOCKER_PORT" > /dev/null
+#echo "---- dockerui started, served at http://localhost:$DOCKERUI_PORT/"
 
 echo "done."
