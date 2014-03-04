@@ -101,6 +101,7 @@ cmd = [
     "docker", "run", action_mode, hostname_arg,
     mount_directives,
     "-dns", "127.0.0.1",
+    "--privileged",
     "-w", LOCAL_DIR,
     port_directives,
     DOCKER_IMAGE, init_machine,
